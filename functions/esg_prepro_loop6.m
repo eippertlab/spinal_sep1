@@ -106,7 +106,6 @@ if debug_mode
 %     waitforbuttonpress
 end
 
-
 %% give every event a number
 counter = 0;
 for itrial = 1:size(cnt.event, 2)

@@ -7,7 +7,8 @@ clear; clc
 
 %% variables that need to be changed
 % loop
-loop_number = 10
+loop_number = 8 
+    
 % subject index
 subject_idx = [];
 
@@ -18,11 +19,13 @@ srmr_nr = 1;
 % conditions
 if loop_number < 3
     conditions = 1:3;
+elseif loop_number == 10
+    conditions = 1:3;
 else
     conditions = 2:3;
 end
 % subjects
-subjects = 1:36;
+subjects = 2:36;
 if ~isempty(subject_idx)
     new_subjects = subjects(subject_idx);
 else
@@ -58,7 +61,7 @@ eeglab  % start eeglab and close gui
 close
 
 
-% scripts 
+% scripts
 functions_path = '/data/pt_02068/analysis/manuscript_sep/scripts/functions/';
 addpath(genpath(functions_path)) % scripts
 
@@ -66,4 +69,5 @@ delete(gcp('nocreate')) % clear parallel pool
 
 %% preprocessing loops
 esg_preprocessing_loops(loop_number, subjects, conditions, srmr_nr, sampling_rate)
+
 

@@ -81,7 +81,7 @@ switch stat_number
                 eval(['tmp_snr = [snr_' extension_conds{istim} '.(chan_names{ichan})''];']) 
                 snr_avg(ichan,1) = nanmean(tmp_snr);
                 snr_sem(ichan,1) = nanstd(tmp_snr) / sqrt(length(tmp_snr));
-                snr_ind.(chan_names{ichan}) = tmp_snr;
+                snr_ind.ichan = tmp_snr;
                 clear tmp*
                
                 
@@ -95,12 +95,7 @@ switch stat_number
             end
             writetable(T_groupstats, fname_group)
             % save individual snr
-            if strcmp('mixed', str_stimulation)
-                fname_snr = [savepath_ga 'stats_ind_snr_' cond_name '.mat'];
-            else
-                fname_snr = [savepath_ga 'stats_ind_snr_' cond_name '_' extension_conds{istim} '.mat'];
-            end
-            save(fname_snr,'snr_ind')
+            T_indsnr = 
         end
         
         

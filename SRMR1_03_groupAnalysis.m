@@ -10,7 +10,7 @@ delete(gcp('nocreate')) % clear parallel pool
 
 %% variables that need to be changed
 % step
-step_number = 8; disp(['step_number = ' step_number])
+step_number = 14; disp(['step_number = ' step_number])
 % sampling rate
 sampling_rate = 1000;
 % subjects
@@ -79,8 +79,8 @@ switch step_number
             stat_number = 1 % detection 
             has_allsubj = true; % subjets where no potential was visible were substituted with the amplitude at grand average latency (over all subj)
             ga_detection_stats(subjects, icondition, srmr_nr, stat_number, has_allsubj);
-            stat_number = 2 % mean and std
-            ga_detection_stats(subjects, icondition, srmr_nr, stat_number, has_allsubj);
+%             stat_number = 2 % mean and std
+%             ga_detection_stats(subjects, icondition, srmr_nr, stat_number, has_allsubj);
         end
         % make table
         get_detection_statsTable(conditions, srmr_nr)
@@ -137,17 +137,19 @@ switch step_number
     case 8
         %% single trial plots
         for condition = conditions
-            isubject = 11; 
-            if condition == 2
-                c_axis = [-0.5 0.5];
-            elseif condition == 3
-                c_axis = [-0.5 0.5];
+            selected_subjects = [6 14 21];
+            for isubject = selected_subjects
+                if condition == 2
+                    c_axis = [-0.5 0.5];
+                elseif condition == 3
+                    c_axis = [-0.5 0.5];
+                end
+                iscolorbar = true;
+                trial_number = 1000;
+                is_norm = true;
+                figure_singleTrial_cca(condition, srmr_nr, isubject, ...
+                    c_axis, iscolorbar, trial_number, is_norm)
             end
-            iscolorbar = true;
-            trial_number = 1000;
-            is_norm = true;
-            figure_singleTrial_cca(condition, srmr_nr, isubject, ...
-                c_axis, iscolorbar, trial_number, is_norm)
         end
     
     case 9
@@ -177,11 +179,55 @@ switch step_number
         clear epo*
         
     case 12
-        %% loop 5: TF plots
+        %% TF plots
         % TF plots over all subjects
         is_evoked = true;
         for condition = conditions
             figure_spinalTFplots(subjects, condition, is_evoked)
         end
+       
+    case 13
+        %% SNR distribution plots
+        %selected_subjects = [6 14 36 21]; % red, green, blue
+        selected_subjects = [6 14 21]; % red, green, blue
+        %selected_subjects = [14 21 36]; % red, green, blue
+        %selected_subjects = [6 21 1]; % red, green, blue
+        %selected_subjects = [14 21 1]; % red, green, blue
+        for condition = conditions
+            if condition == 2
+                target_chan = 'SC6_antRef';
+            elseif condition == 3
+                target_chan = 'L1_antRef';
+            end
+            figure_distributionPlot(condition, srmr_nr, target_chan, selected_subjects)
+        end
+    case 14
+        % average canonical correlation of 1st component
+        for nerve = 1:2
+            % get condition info
+            if nerve == 1
+                nerve_name = 'medianus';
+            elseif nerve == 2
+                nerve_name = 'tibialis';
+            end
+            for isubject = 1:length(subjects)
+                subject = subjects(isubject);
+                subject_id = sprintf('sub-%03i', subject);
                 
+                load_path = [getenv('ESGDIR') subject_id '/'];
+                file_name = [load_path 'cca_info_' nerve_name(1:3) 'mixed.mat'];
+                load(file_name, 'R')
+                CC_val(isubject) = R(1);
+            end
+            CC_mean = mean(CC_val);
+            CC_max = max(CC_val);
+            CC_min = min(CC_val);
+            CC_median = median(CC_val);
+            CC_std = std(CC_val);
+            
+            save_path = getenv('GADIR');
+            fname = [save_path 'CCstats_' nerve_name(1:3) '_mixed.mat'];
+            
+            save(fname, 'CC_mean', 'CC_max', 'CC_min', 'CC_median', 'CC_std')
+        end
 end

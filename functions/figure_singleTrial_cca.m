@@ -22,8 +22,8 @@ end
 
 
 % get data
-dat_level = [3 5]; % 3=esg-TH6 5=esg-cca
-dat_str = {'esg-th6Ref' 'esg-cca'};
+dat_level = [3 5]; % 4=esg-antRef 5=esg-cca
+dat_str = {'esg-antRef' 'esg-cca'};
 for idat = 1:length(dat_level)
     idatlevel = dat_level(idat);
     is_raw = false;
