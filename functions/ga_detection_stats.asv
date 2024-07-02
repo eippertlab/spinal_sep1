@@ -1,0 +1,135 @@
+% Author: Birgit Nierula
+% nierula@cbs.mpg.de
+
+function ga_detection_stats(subjects, condition, srmr_nr, stat_number, has_allsubj)
+
+
+%% set variables
+savepath_ga = getenv('GADIR');
+
+% get condition info
+[cond_info] = get_conditionInfo(condition, srmr_nr);
+cond_name = cond_info.cond_name;
+nerve = cond_info.nerve;
+str_stimulation = cond_info.str_stimulation(2:end);
+if strcmp('digits', str_stimulation)
+    str_stimulation = 'sensory';
+end
+
+[amp, lat, snr] = get_mergedData(condition, srmr_nr, subjects, has_allsubj);
+
+if strcmp('sensory', str_stimulation)
+    extension_conds = {'d1' 'd2' 'd12'};
+else
+    extension_conds = {'m'};
+end
+stim_types = length(extension_conds);
+
+for istim = 1:stim_types
+    eval(['amplitude_' extension_conds{istim} ' = amp.amplitude_' extension_conds{istim} ';'])
+    eval(['snr_' extension_conds{istim} ' = snr.snr_' extension_conds{istim} ';'])
+    eval(['latency_' extension_conds{istim} ' = lat.latency_' extension_conds{istim} ';'])
+end
+
+% exclude brainstem and Erbs point for SRMR2
+if srmr_nr == 1
+    if nerve == 1
+        chan_names = {'Biceps' 'EP' 'SC6' 'SC6_antRef' 'SC1' 'esg_cca' 'eeg_cca'};
+    elseif nerve == 2
+        chan_names = {'Knee' 'L1' 'L1_antRef' 'esg_cca' 'S3' 'eeg_cca'};
+    end
+elseif srmr_nr == 2
+    if nerve == 1
+        chan_names = {'Biceps' 'SC6' 'SC6_antRef' 'esg_cca' 'eeg_cca'};
+    elseif nerve == 2
+        chan_names = {'Knee' 'L1' 'L1_antRef' 'esg_cca' 'eeg_cca'};
+    end
+end
+
+
+switch stat_number  
+   
+    case 1
+        %% detectability of SEP potentials for
+        for istim = 1:stim_types
+            for ichan = 1:size(chan_names,2)
+                eval(['X = [amplitude_' extension_conds{istim} '.(chan_names{ichan})''];']) % trials x subjects
+                M = 0;
+                
+                %% ttest group level
+                avgX = nanmean(X, 1);
+                [H,P,CI,STATS] = ttest(avgX, M);
+                % effect_size
+                tmp_r= sqrt(STATS.tstat^2 / (STATS.tstat^2 + STATS.df));
+                tmp_gavg = nanmean(avgX); % mean over trials and subjects
+                tmp_std = nanstd(avgX); % std over subjects (mean is over trials)
+                tmp_cohend = (tmp_gavg - 0) / tmp_std;
+                chan_all(ichan,1) = chan_names(ichan);
+                tstat_all(ichan,1) = STATS.tstat;
+                df_all(ichan,1) = STATS.df;
+                p_all(ichan,1) = round(P'*1000000)/1000000;
+                ci_all(ichan,:) = CI';
+                r_all(ichan,1) =  tmp_r';
+                d_all(ichan,1) = tmp_cohend;
+                h_all(ichan,1) = H';
+                avg_all(ichan,1) = tmp_gavg;
+                n_all(ichan,1) = length(find(~isnan(avgX)));
+                sem_all(ichan,1) = tmp_std / sqrt(n_all(ichan,1));
+                
+                
+                %% snr
+                eval(['tmp_snr = [snr_' extension_conds{istim} '.(chan_names{ichan})''];']) 
+                snr_avg(ichan,1) = nanmean(tmp_snr);
+                snr_sem(ichan,1) = nanstd(tmp_snr) / sqrt(length(tmp_snr));
+                snr_ind.ichan = tmp_snr;
+                clear tmp*
+               
+                
+            end
+            % save group stats
+            T_groupstats = table(chan_all, n_all, avg_all, sem_all, tstat_all, df_all, p_all, ci_all, r_all, d_all, h_all, snr_avg, snr_sem);
+            if strcmp('mixed', str_stimulation)
+                fname_group = [savepath_ga 'stats_group_detectability_' cond_name '.xlsx'];
+            else
+                fname_group = [savepath_ga 'stats_group_detectability_' cond_name '_' extension_conds{istim} '.xlsx'];
+            end
+            writetable(T_groupstats, fname_group)
+            % save individual snr
+            T_indsnr = 
+        end
+        
+        
+    case 2
+        %% mean and std
+        for istim = 1:stim_types
+            for ichan = 1:size(chan_names,2)
+                for isubject = 1:length(subjects)
+                    eval(['X(:,isubject) = [amplitude_' extension_conds{istim} '.(chan_names{ichan})(isubject,:)''];']) % trials x channels
+                    eval(['Y(:,isubject) = [latency_' extension_conds{istim} '.(chan_names{ichan})(isubject,1)''];']) % trials x channels
+                end
+                
+                % mean
+                descriptive_stats.mean_amplitude = nanmean(X,1);
+                descriptive_stats.latency = Y;
+                % std
+                descriptive_stats.std_amplitude = nanstd(X,1);
+
+                latency.mean = nanmean(descriptive_stats.latency);
+                latency.std = nanstd(descriptive_stats.latency);
+                latency.n = sum(~isnan(descriptive_stats.latency));
+                latency.sem = latency.std / sqrt(latency.n);
+                
+                if strcmp('mixed', str_stimulation)
+                    fname_group = [savepath_ga 'stats_group_latency_' cond_name '_' chan_names{ichan} '.mat'];
+                else
+                    fname_group = [savepath_ga 'stats_group_latency_' cond_name '_' extension_conds{istim} '_' chan_names{ichan} '.mat'];
+                end
+                save(fname_group, 'latency')
+                clear X Y
+            end
+        end
+end
+
+
+
+
