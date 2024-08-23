@@ -1,4 +1,4 @@
-% Author: Birgit Nierula
+% Author: Birgit iNierula
 % nierula@cbs.mpg.de
 
 function figure_spinalSEP(condition, subjects)
@@ -81,7 +81,7 @@ for dat_level = data_levels
                 clear dat
             end
             epo_all.(['d' num2str(dat_level)]).potLatency = out{isubject}.potLatency;
-            epo_all.(['d' num2str(dat_level)]).potWindow = out{isubject}.potWindow;
+            %epo_all.(['d' num2str(dat_level)]).potWindow = out{isubject}.potWindow;
             epo_all.(['d' num2str(dat_level)]).is_au = is_au;
         end
     end
@@ -128,21 +128,21 @@ hold on,
 for ii = 1:length(data_levels)
     ichan = 1;
     epo = epo_all.(['d' num2str(data_levels(ii))]);
-    
+
     % calculate mean and sem
     grndAvg = nanmean(epo.data(ichan, :, :), 3);
     if length(subjects) > 1
         grndSem = nanstd(epo.data(ichan, :, :), [], 3) / sqrt(size(epo.data, 3));
         error_band = fill([epo.times fliplr(epo.times)], [grndAvg-grndSem fliplr(grndAvg+grndSem)], color_code{1}, 'LineStyle','none');
-    
+
         % plot
         set(error_band, 'facealpha', face_alpha);
     end
     h = plot( epo.times, grndAvg, 'Color', color_code{ii}, 'linewidth', line_width );
-       
+
     clear grndAV grndSem
-    
-    
+
+
     legend_name{ii} = epo.title{ichan};  
     legend_lines(ii) = h;
 end
@@ -173,3 +173,29 @@ else
 end
 print([getenv('FIGUREPATH') fname], '-dpng', '-painters') 
 print([getenv('FIGUREPATH') fname], '-dsvg', '-painters')  
+
+
+%% convert to excel
+%% ------------
+% 1 = eeg clean
+% 2 = eeg cca
+% 3 = esg clean TH6 ref
+% 4 = esg clean anterior ref
+% 5 = esg cca
+% 6 = brainstem
+% 7 = eng
+% columns: counter, time, subject trace
+excel_fname = [getenv('FIGUREPATH') 'Figure_03.xlsx'];
+levels = {'eeg' 'eeg-cca' 'esg-TH6' 'esg-antRef' 'esg-cca' 'brainstem' 'eng'};
+sheet_names = levels(data_levels);
+all_data = epo_all;
+struct_names = fieldnames(all_data);
+for ii = 1:length(sheet_names)
+    for tt = 1:length(all_data.(struct_names{ii}).title)
+        time = all_data.(struct_names{ii}).times;
+        counter = 0:length(time)-1;
+        sheet_name = sheet_names{ii};
+        tmp_data = [counter' time' squeeze(all_data.(struct_names{ii}).data(tt,:,:))];
+        writematrix(tmp_data, excel_fname, 'Sheet', sprintf('%s', [cond_name '_' sheet_name '_' all_data.(struct_names{ii}).title{tt}]))
+    end
+end

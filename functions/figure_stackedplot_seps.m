@@ -97,7 +97,11 @@ for dat_level = data_levels
                     chan_idx = 1;
                 end
                 if length(subjects) > 1
-                    epo_all.(['d' num2str(dat_level)]).data(ichan,:,isubject) = nanmean(out{isubject}.data(chan_idx,:,:), 3);
+                    if isempty(nanmean(out{isubject}.data(chan_idx,:,:), 3))
+                        epo_all.(['d' num2str(dat_level)]).data(ichan,:,isubject) = NaN; 
+                    else
+                        epo_all.(['d' num2str(dat_level)]).data(ichan,:,isubject) = nanmean(out{isubject}.data(chan_idx,:,:), 3);
+                    end
                 else
                     epo_all.(['d' num2str(dat_level)]).data(ichan,:,:) = out{isubject}.data(chan_idx,:,:);
                 end
@@ -108,7 +112,7 @@ for dat_level = data_levels
                 end
             end
             epo_all.(['d' num2str(dat_level)]).potLatency(isubject,:) = out{isubject}.potLatency;
-            epo_all.(['d' num2str(dat_level)]).potWindow(isubject,:) = out{isubject}.potWindow;
+            %epo_all.(['d' num2str(dat_level)]).potWindow(isubject,:) = out{isubject}.potWindow;
             epo_all.(['d' num2str(dat_level)]).is_au = is_au;
             if isubject == 1
                 epo_all.times = out{isubject}.times;
@@ -227,3 +231,30 @@ else
 end
 print([getenv('FIGUREPATH') fname], '-dpng', '-painters') 
 print([getenv('FIGUREPATH') fname], '-dsvg', '-painters')    
+
+
+
+%% convert to excel
+%% ------------
+% 1 = eeg clean
+% 2 = eeg cca
+% 3 = esg clean TH6 ref
+% 4 = esg clean anterior ref
+% 5 = esg cca
+% 6 = brainstem
+% 7 = eng
+% columns: counter, time, subject trace
+excel_fname = [getenv('FIGUREPATH') 'Figure_02.xlsx'];
+levels = {'eeg' 'eeg-cca' 'esg-TH6' 'esg-antRef' 'esg-cca' 'brainstem' 'eng'};
+sheet_names = levels(data_levels);
+time = epo_all.times;
+all_data = rmfield(epo_all,'times');
+struct_names = fieldnames(all_data);
+counter = 0:length(time)-1;
+for ii = 1:length(sheet_names)
+    for tt = 1:length(all_data.(struct_names{ii}).title)
+        sheet_name = sheet_names{ii};
+        tmp_data = [counter' time' squeeze(all_data.(struct_names{ii}).data(tt,:,:))];
+        writematrix(tmp_data, excel_fname, 'Sheet', sprintf('%s', [cond_name '_' sheet_name '_' all_data.(struct_names{ii}).title{tt}]))
+    end
+end

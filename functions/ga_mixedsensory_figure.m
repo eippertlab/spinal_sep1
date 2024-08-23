@@ -124,6 +124,35 @@ for ichan = 1:length(chan_names)
     else
         figure_name = [figure_path 'mixedsensory_' nerve_name '_' chan_names{ichan} '_' subject_id];
     end
-    print(figure_name, '-dpng', '-painters')
-    print(figure_name, '-dsvg', '-painters')
+    %print(figure_name, '-dpng', '-painters')
+    %print(figure_name, '-dsvg', '-painters')
+
+
+    %% convert to excel
+    %% ------------
+    % columns: counter, time, subjects d1, subjects d2, subjects d12
+    excel_fname = [getenv('FIGUREPATH') 'Figure_05.xlsx'];
+    sheet_name = 'mixedsensory_sep_';
+
+    all_conditions = {'_mixed' '_d12'};
+
+    all_times = epo_m.times;
+    all_data1 = squeeze(epo_m.data(ichan, :, subjects));
+    all_data2 = squeeze(epo_d12.data(ichan, :, subjects));
+
+    counter = 0:length(all_times)-1;
+    sub_counter = 0;
+    for isub = subjects
+        sub_couter = sub_counter + 1;
+        col_header1{isub} = [sprintf('sub-%03i', isub) all_conditions{1}];
+        col_header2{isub} = [sprintf('sub-%03i', isub) all_conditions{2}];
+    end
+
+    table1 = array2table(counter');
+    table1.('time') = all_times';
+    table2 = array2table(all_data1, 'VariableNames', col_header1');
+    table3 = array2table(all_data2, 'VariableNames', col_header2');
+    table = [table1,table2,table3];
+    writetable(table, excel_fname, 'Sheet', sprintf('%s', [nerve_name '_' sheet_name]))
+
 end

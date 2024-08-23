@@ -188,11 +188,7 @@ switch step_number
        
     case 13
         %% SNR distribution plots
-        %selected_subjects = [6 14 36 21]; % red, green, blue
         selected_subjects = [6 14 21]; % red, green, blue
-        %selected_subjects = [14 21 36]; % red, green, blue
-        %selected_subjects = [6 21 1]; % red, green, blue
-        %selected_subjects = [14 21 1]; % red, green, blue
         for condition = conditions
             if condition == 2
                 target_chan = 'SC6_antRef';

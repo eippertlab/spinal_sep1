@@ -227,10 +227,53 @@ if length(subjects) > 1
 else
     fname = ['tf_spinal_' cond_name sprintf('_sub-%03i', subjects) str_evoked];
 end
-print([getenv('FIGUREPATH') fname], '-dpng', '-painters') 
-print([getenv('FIGUREPATH') fname], '-dsvg', '-painters')  
+%print([getenv('FIGUREPATH') fname], '-dpng', '-painters') 
+%print([getenv('FIGUREPATH') fname], '-dsvg', '-painters')  
 
 
+%% convert to excel
+%% ------------
+% not possible in one sheet --> devided over two sheets
+% columns: counter, frequency, subject
+excel_fname = [getenv('FIGUREPATH') 'Figure_03.xlsx'];
+% subj 1-18
+sheet_name = 'esg-tf_plot_sub-1-18';
+counter = 0:length(frex)-1;
+col_counter = 0;
+for isub = subjects(1:18)
+    subject_id = sprintf('sub-%03i', isub);
+    for itime = 1:length(subj_times)
+        col_counter = col_counter + 1;
+        col_names{col_counter} = [subject_id '_' num2str(subj_times(itime)) 'ms'];
+    end
+end
+TF_cell=num2cell(all_TF(:,:,1:18),[1 2]);
+TF_cell = reshape(TF_cell,[],18);
+TF_mat = cell2mat(TF_cell);
+table1 = array2table(counter');
+table1.('Frequencies') = frex';
+table2 = array2table(TF_mat, 'VariableNames', col_names');
+table = [table1,table2];
+writetable(table, excel_fname, 'Sheet', sprintf('%s', [cond_name '_' sheet_name]))
+% subj 19-36
+sheet_name = 'esg-tf_plot_sub-19-36';
+counter = 0:length(frex)-1;
+col_counter = 0;
+for isub = subjects(19:36)
+    subject_id = sprintf('sub-%03i', isub);
+    for itime = 1:length(subj_times)
+        col_counter = col_counter + 1;
+        col_names{col_counter} = [subject_id '_' num2str(subj_times(itime)) 'ms'];
+    end
+end
+TF_cell=num2cell(all_TF(:,:,19:36),[1 2]);
+TF_cell = reshape(TF_cell,[],18);
+TF_mat = cell2mat(TF_cell);
+table1 = array2table(counter');
+table1.('Frequencies') = frex';
+table2 = array2table(TF_mat, 'VariableNames', col_names');
+table = [table1,table2];
+writetable(table, excel_fname, 'Sheet', sprintf('%s', [cond_name '_' sheet_name]))
  
 end
 

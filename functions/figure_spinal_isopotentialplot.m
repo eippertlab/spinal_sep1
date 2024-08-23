@@ -14,11 +14,8 @@ cond_name = cond_info.cond_name;
 all_chanvalues = NaN(length(subjects), size(esg_chans,2));
 for isubject = 1:length(subjects)
     epo = dat{subjects(isubject)};
-    pot_start = epo.potWindow(1);
-    pot_end = epo.potWindow(2);
-    idx1 = find(epo.times <= pot_start);
-    idx2 = find(epo.times >= pot_end);
-    time_idx = idx1(end) : idx2(1);
+    pot_peak = epo.potLatency;
+    time_idx = find(epo.times == pot_peak);
     for ichan = 1:size(esg_chans,2)
         chan_idx = find(ismember({epo.chanlocs.labels}, esg_chans{ichan}));
         if ~isempty(chan_idx)
@@ -96,5 +93,23 @@ else
         fname = ['esg_' cond_name sprintf('_isopot_sub-%03i_esg', subjects)];
     end
 end
-print([getenv('FIGUREPATH') fname], '-dpng', '-painters') 
-print([getenv('FIGUREPATH') fname], '-dsvg', '-painters')    
+% print([getenv('FIGUREPATH') fname], '-dpng', '-painters') 
+% print([getenv('FIGUREPATH') fname], '-dsvg', '-painters')    
+
+
+%% convert to excel
+%% ------------
+% columns: counter, channels, subjects data at SEP peak
+excel_fname = [getenv('FIGUREPATH') 'Figure_03.xlsx'];
+all_channels = {epo.chanlocs.labels};
+sheet_name = 'esg-topoplot';
+counter = 0:length(all_channels)-2;
+for isub = subjects
+    subject_ids{isub} = sprintf('sub-%03i', isub);
+end
+table1 = array2table(counter');
+table1.('Channel') = all_channels(1:39)';
+table2 = array2table(all_chanvalues(:,1:39)', 'VariableNames', subject_ids');
+table = [table1,table2];
+writetable(table, excel_fname, 'Sheet', sprintf('%s', [cond_name '_' sheet_name]))
+

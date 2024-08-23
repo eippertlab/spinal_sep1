@@ -85,4 +85,23 @@ box off
 
 % save figure
 fname = [ cond_name '_distributionPlot' ];
-print([getenv('FIGUREPATH') fname], '-dsvg', '-painters') 
+%print([getenv('FIGUREPATH') fname], '-dsvg', '-painters') 
+
+
+%% convert to excel
+%% ------------
+% columns: counter, trial_number, esg-target, esg-cca
+excel_fname = [getenv('FIGUREPATH') 'Figure_04.xlsx'];
+sheet_name = 'snr' ;
+counter = 0:1;
+comparison = {'single_channel' 'cca'};
+for isub = 1:36
+    col_header{isub} = [sprintf('sub-%03i', isub) '_snr'];
+end
+data = [data1;data2];
+
+table1 = array2table(counter');
+table1.('analysis_type') = comparison';
+table2 = array2table(data, 'VariableNames', col_header');
+table = [table1,table2];
+writetable(table, excel_fname, 'Sheet', sprintf('%s', [cond_name '_' sheet_name]))

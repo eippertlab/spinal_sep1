@@ -116,6 +116,36 @@ for idat = 1:length(dat_level)
 
     %% save
     fname = ['esg_' cond_name sprintf(['_singelTrial_sub-%03i_' dat_str{idat}], isubject)];
-    print([getenv('FIGUREPATH') fname], '-dpng', '-painters') 
-    print([getenv('FIGUREPATH') fname], '-dsvg', '-painters') 
+    %print([getenv('FIGUREPATH') fname], '-dpng', '-painters') 
+    %print([getenv('FIGUREPATH') fname], '-dsvg', '-painters') 
+
+
+    %% convert to excel
+    %% ------------
+    % columns: counter, trial_number, esg-target, esg-cca
+    excel_fname = [getenv('FIGUREPATH') 'Figure_04.xlsx'];
+    sheet_name = ['esg-single-trial_' sprintf('sub-%03i', isubject)];
+    dat_name = {'target-vertebra' 'cca'};
+    counter = 0:trial_number-1;
+    trial_numbers = 1:trial_number;
+    all_times = x_tickpoints(1):x_tickpoints(end)-1;
+    col_counter = 0;
+    for itime = all_times
+        col_counter = col_counter + 1;
+        col_names{col_counter} = [dat_name{idat} '_' num2str(itime) 'ms'];
+    end
+    
+    table1 = array2table(counter');
+    table1.('trial_number') = trial_numbers';
+    table2 = array2table(trialvalues, 'VariableNames', col_names');
+    if idat == 1
+        table = [table1,table2];
+    else
+        table = [table,table2];
+    end
+    
+    
 end
+
+writetable(table, excel_fname, 'Sheet', sprintf('%s', [cond_name '_' sheet_name]))
+ 
